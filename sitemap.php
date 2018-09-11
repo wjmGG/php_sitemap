@@ -11,18 +11,15 @@ mysqli_select_db($db_con,$dbdatabase);
 /***********连接数据库****end******/
 $page_size    =    10000; //每页条数
 //1w个地址生成一个子地图，判断需要生成几个？
+//数据查询操作 计算数据中的总和。
 $countQuery = mysqli_query($db_con,"select count(eoe_id) from apps where status = 1 ");
 $count = implode(',' , mysqli_fetch_row($countQuery));
+// 计算总页数。
 $appsCountPage = ceil($count/$page_size);  //分几个文件
-
 $articleCountQuery = mysqli_query($db_con,"select count(id) from article where status = 1 ");
-
 $articleCount = implode(',' , mysqli_fetch_row($articleCountQuery));
-
 $articleCountPage = ceil($articleCount/$page_size);  //分几个文件
-
-
-
+//运行方法。
 www_create_index($appsCountPage,$articleCountPage);
 www_create_child($db_con,$appsCountPage,$articleCountPage,$page_size);
 wap_baidu_create_index($appsCountPage,$articleCountPage);
