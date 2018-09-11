@@ -24,8 +24,9 @@ $articleCountPage = ceil($articleCount/$page_size);  //分几个文件
 
 
 www_create_index($appsCountPage,$articleCountPage);
-
 www_create_child($db_con,$appsCountPage,$articleCountPage,$page_size);
+wap_baidu_create_index($appsCountPage,$articleCountPage);
+wap_baidu_create_child($db_con,$appsCountPage,$articleCountPage,$page_size);
 
 //百度生成主sitemap  www
 function www_create_index($page_count,$articleCountPage) {
@@ -51,7 +52,6 @@ function www_create_index($page_count,$articleCountPage) {
     $content .= "</sitemapindex>";
     file_put_contents("www_sitemap.xml",$content);
 }
-
 //百度生成子sitemap  www
 function www_create_child($db_con,$appsCountPage,$articleCountPage,$page_size) {
     for($i=0;$i<$appsCountPage;$i++) {
@@ -97,6 +97,84 @@ function www_create_child($db_con,$appsCountPage,$articleCountPage,$page_size) {
             $str .= '</urlset>';
 
             file_put_contents('www_sitemap/sitemapArticle'.($i+1).".xml" ,$str);
+        }else{
+            die("fetch data failed!");
+        }
+    }
+}
+
+// 百度的 sitemap www和wap的区别就在于 <mobile:mobile type="mobile"/> 单标签
+//百度生成主sitemap wap
+function wap_baidu_create_index($page_count,$articleCountPage) {
+
+    $content = "<?xml version=\"1.0\" encoding=\"utf-8\"?>";
+    $content .= "<sitemapindex>";
+    for($i=1;$i<=$page_count;$i++) {
+
+        $content .="<sitemap>";
+        $content .= "<loc>https://m.eoews.com/sitemap/sitemapApps$i.xml</loc>";
+        $content .= "<lastmod>".date('Y-m-d')."</lastmod>";
+        $content .= "</sitemap>";
+    }
+
+    for($i=1;$i<=$articleCountPage;$i++) {
+
+        $content .="<sitemap>";
+        $content .= "<loc>https://m.eoews.com/sitemap/sitemapArticle$i.xml</loc>";
+        $content .= "<lastmod>".date('Y-m-d')."</lastmod>";
+        $content .= "</sitemap>";
+    }
+
+    $content .= "</sitemapindex>";
+    file_put_contents("wap_sitemap_baidu.xml",$content);
+}
+//百度生成子sitemap wap
+function wap_baidu_create_child($db_con,$appsCountPage,$articleCountPage,$page_size) {
+    for($i=0;$i<$appsCountPage;$i++) {
+
+        $count = $i * $page_size;
+
+        $Appsresult = mysqli_query($db_con,"SELECT eoe_id,updated_time FROM apps where status = 1 ORDER BY updated_time desc limit $count,$page_size");//
+//提取数据
+        if($Appsresult){
+            $str = '<?xml version="1.0" encoding="utf-8"?>';
+            $str .= '<urlset xmlns:mobile="http://www.baidu.com/schemas/sitemap-mobile/1/">';
+            while($row = mysqli_fetch_array($Appsresult,MYSQLI_ASSOC))  {
+                $str .= '<url>';
+                $str .= "<loc>https://m.eoews.com/soft/{$row["eoe_id"]}.html</loc>";
+                $str .= '<mobile:mobile type="mobile"/>';
+                $str .= "<lastmod>" . date('Y-m-d',strtotime($row["updated_time"])) . "</lastmod>";
+                $str .= "<changefreq>daily</changefreq>";
+                $str .= "<priority>0.9</priority>";
+                $str .= '</url>';
+            }
+            $str .= '</urlset>';
+            file_put_contents('wap_sitemap/wap_sitemap_baidu/sitemapApps'.($i+1).".xml" ,$str);
+        }else{
+            die("fetch data failed!");
+        }
+    }
+    for($i=0;$i<$articleCountPage;$i++) {
+
+        $count = $i * $page_size;
+
+        $Articleresult = mysqli_query($db_con,"SELECT id,updated_time FROM article where status = 1 ORDER BY updated_time desc limit $count,$page_size");//
+//提取数据
+        if($Articleresult){
+            $str = '<?xml version="1.0" encoding="utf-8"?>';
+            $str .= '<urlset>';
+            while($row = mysqli_fetch_array($Articleresult,MYSQLI_ASSOC))  {
+                $str .= '<url>';
+                $str .= "<loc>https://m.eoews.com/article/{$row["id"]}.html</loc>";
+                $str .= '<mobile:mobile type="mobile"/>';
+                $str .= "<lastmod>" . date('Y-m-d',strtotime($row["updated_time"])) . "</lastmod>";
+                $str .= "<changefreq>daily</changefreq>";
+                $str .= "<priority>0.9</priority>";
+                $str .= '</url>';
+            }
+            $str .= '</urlset>';
+
+            file_put_contents('wap_sitemap/wap_sitemap_baidu/sitemapArticle'.($i+1).".xml" ,$str);
         }else{
             die("fetch data failed!");
         }
